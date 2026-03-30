@@ -1,0 +1,40 @@
+{{/*
+ingress.yaml — exposes the Service to the internet via a GCP Load Balancer.
+
+An Ingress is a Layer-7 (HTTP/HTTPS) load balancer rule.
+On GKE, the "gce" ingress class provisions a Google Cloud Load Balancer automatically.
+
+This resource is conditional: `ingress.enabled: false` in values-dev.yaml
+disables it (use `kubectl port-forward` in dev instead).
+*/}}
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: checkout-api-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "checkout-api.labels" . | nindent 4 }}
+  annotations:
+    # Tells GKE to use the Google Cloud Load Balancer (external, HTTP/HTTPS)
+    kubernetes.io/ingress.class: {{ .Values.ingress.className | quote }}
+spec:
+  rules:
+    {{- if .Values.ingress.host }}
+    # If a hostname is configured, route only requests for that host
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+    {{- else }}
+    # No hostname = catch-all: the LB IP routes ALL traffic to this service
+    - http:
+    {{- end }}
+        paths:
+          - path: /
+            # Prefix: matches / and everything under it (e.g. /orders, /health)
+            pathType: Prefix
+            backend:
+              service:
+                name: checkout-api-service
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}

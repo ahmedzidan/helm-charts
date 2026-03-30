@@ -1,0 +1,30 @@
+{{/*
+service.yaml — stable internal endpoint for the checkout-api pods.
+
+A Service gives pods a single stable DNS name and IP, even as pods are replaced
+during rolling updates. The Ingress sends traffic here; this forwards to the pods.
+
+cloud.google.com/neg annotation enables Network Endpoint Groups on GKE,
+which gives the Google Cloud Load Balancer direct pod-level routing (faster, healthier).
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-api-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "checkout-api.labels" . | nindent 4 }}
+  annotations:
+    # NEG (Network Endpoint Group): GKE routes traffic directly to pods,
+    # bypassing an extra iptables hop — lower latency, better health checks
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  # NodePort: exposes the service on a port on each node — required for GKE Ingress
+  type: {{ .Values.service.type }}
+  selector:
+    # Must match the Deployment pod labels
+    app: checkout-api
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}         # port the Service listens on (80)
+      targetPort: {{ .Values.service.targetPort }} # port the container listens on (8080)

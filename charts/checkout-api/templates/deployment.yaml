@@ -1,0 +1,74 @@
+{{/*
+deployment.yaml — runs the checkout-api application containers.
+
+A Deployment manages a ReplicaSet, which manages individual Pods.
+Helm fills in {{ .Values.* }} placeholders at deploy time — no manual editing needed
+between environments.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "checkout-api.labels" . | nindent 4 }}
+spec:
+  # Number of pod replicas — controlled per environment in values-*.yaml
+  replicas: {{ .Values.replicaCount }}
+
+  # The selector must match the pod template labels below
+  selector:
+    matchLabels:
+      app: checkout-api
+
+  # Rolling update strategy (default): replaces pods one at a time — zero downtime
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # allow 1 extra pod during update
+      maxUnavailable: 0  # never take a pod down before a new one is ready
+
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+        {{- include "checkout-api.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: checkout-api
+          # Full image path built by the _helpers.tpl template function
+          image: {{ include "checkout-api.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+
+          # DATABASE_URL is injected from the Secret (never hardcoded in the image)
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DATABASE_URL
+
+          # Resource limits prevent one student's app from starving others on the node
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          # readinessProbe: k8s only sends traffic when /health returns 200
+          # If this fails, the pod is removed from the Service endpoints (no traffic sent)
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+
+          # livenessProbe: k8s restarts the container if /health fails repeatedly
+          # Guards against hung processes that are alive but not processing requests
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}

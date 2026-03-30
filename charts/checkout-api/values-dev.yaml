@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# values-dev.yaml — DEV environment overrides
+#
+# These values are merged on top of values.yaml when you run:
+#   helm upgrade --install checkout-api ./helm/checkout-api \
+#     --values ./helm/checkout-api/values-dev.yaml \
+#     --set studentName=your-name
+#
+# Dev philosophy: minimal resources, no ingress, easy to run locally or on
+# a shared dev cluster without consuming too many resources.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Single replica is enough for local development
+replicaCount: 1
+
+# No ingress in dev — access via `kubectl port-forward` instead
+ingress:
+  enabled: false
+
+# Lower resource limits — dev doesn't need production capacity
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+

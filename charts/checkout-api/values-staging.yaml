@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# values-staging.yaml — STAGING environment overrides
+#
+# Staging is the environment that runs in the shared GKE cluster.
+# Each student gets their own isolated namespace: student-<studentName>
+#
+# Deploy command (used by the CI pipeline):
+#   helm upgrade --install checkout-api ./helm/checkout-api \
+#     --namespace student-${STUDENT_NAME} \
+#     --create-namespace \
+#     --values ./helm/checkout-api/values-staging.yaml \
+#     --set studentName=${STUDENT_NAME} \
+#     --set image.tag=${CI_COMMIT_SHA} \
+#     --set database.url="${DATABASE_URL}"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Two replicas in staging to simulate HA and test rolling updates
+replicaCount: 2
+
+# Ingress is enabled so staging is reachable from outside the cluster
+ingress:
+  enabled: true
+  className: gce
+
+# Staging gets more CPU/memory than dev — closer to production sizing
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+

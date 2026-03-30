@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# values.yaml — DEFAULT values shared across ALL environments
+#
+# How values work in Helm:
+#   1. values.yaml is the base (this file)
+#   2. values-dev.yaml or values-staging.yaml OVERRIDE specific keys
+#   3. --set flags on the CLI override everything
+#
+# To deploy:
+#   helm upgrade --install checkout-api ./helm/checkout-api \
+#     --values ./helm/checkout-api/values-staging.yaml \
+#     --set studentName=your-name \
+#     --set image.tag=abc123
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Container image ───────────────────────────────────────────────────────────
+# GCP Artifact Registry path: HOST/PROJECT/REPOSITORY/IMAGE:TAG
+# Each student has their own repository (named after their namespace).
+# The full image is built in _helpers.tpl as: registry/namespace/repository:tag
+image:
+  registry: us-west2-docker.pkg.dev/xsolla-school-experiments
+  # AR repository name — shared by all students
+  arRepo: checkout-api
+  repository: checkout-api
+  # Set by the pipeline via --set image.tag=${CI_COMMIT_SHA}
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# ── Deployment ────────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: NodePort   # NodePort works with GKE Ingress; change to ClusterIP for internal-only
+  port: 80
+  targetPort: 8080
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  # GKE uses the "gce" ingress class (Google Cloud Load Balancer)
+  className: gce
+  # Leave empty for IP-based access; set to your domain when available
+  host: ""
+
+# ── Resource requests & limits ────────────────────────────────────────────────
+# requests: what k8s reserves on the node
+# limits:   the hard cap — exceeding this kills/throttles the container
+resources:
+  requests:
+    cpu: 100m      # 100 millicores = 0.1 CPU
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# ── Health probes ─────────────────────────────────────────────────────────────
+# readiness: pod only receives traffic when this passes
+# liveness:  pod is restarted if this fails
+probes:
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    initialDelaySeconds: 15
+    periodSeconds: 20
+
+# ── Database connection ───────────────────────────────────────────────────────
+# Stored in a k8s Secret. In CI this is overridden via --set database.url="..."
+# using the $DATABASE_URL CI variable (never commit real credentials).
+database:
+  url: "postgresql://postgres:postgres@postgres-service:5432/postgres"
