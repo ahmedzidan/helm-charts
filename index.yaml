@@ -3,6 +3,16 @@ entries:
   checkout-api:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-04-29T05:28:07.770095766Z"
+    description: Helm chart for the Xsolla School Checkout API
+    digest: 3ce6fa481d76cc05913359587ebfb991af7dcc3823aa8a8e204efcf0f03dfcb3
+    name: checkout-api
+    type: application
+    urls:
+    - https://github.com/ahmedzidan/helm-charts/releases/download/checkout-api-0.2.0/checkout-api-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-03-30T13:26:16.511904+08:00"
     description: Helm chart for the Xsolla School Checkout API
     digest: 88b94e440cf2a4066e9e0f2cecf6cab217d75c1d90e14f6e74b73e6e4bc7f012
@@ -11,4 +21,4 @@ entries:
     urls:
     - https://github.com/ahmedzidan/helm-charts/releases/download/checkout-api-0.1.0/checkout-api-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-30T13:26:16.511393+08:00"
+generated: "2026-04-29T05:28:07.770103742Z"
