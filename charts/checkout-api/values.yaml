@@ -70,3 +70,24 @@ probes:
 # using the $DATABASE_URL CI variable (never commit real credentials).
 database:
   url: "postgresql://postgres:postgres@postgres-service:5432/postgres"
+
+# ── OpenTelemetry ─────────────────────────────────────────────────────────────
+# The app reads these three env vars to initialize tracing, metrics, and logging.
+# collectorURL: overridden per environment — dev points to localhost, staging to
+#               the in-cluster OTel Collector service.
+otel:
+  serviceName: checkout-api
+  serviceEnv: development
+  collectorURL: localhost:4317
+
+# ── Datadog unified service tags ──────────────────────────────────────────────
+# Applied as pod-template labels so the Datadog Agent automatically tags every
+# trace, metric, and log with env/service/version — enabling correlation across
+# all three pillars in Datadog.
+# https://docs.datadoghq.com/getting_started/tagging/unified_service_tagging/
+datadog:
+  env: development
+  service: checkout-api
+  # version is set to the image tag at deploy time via:
+  #   --set datadog.version=${CI_COMMIT_SHA}
+  version: latest

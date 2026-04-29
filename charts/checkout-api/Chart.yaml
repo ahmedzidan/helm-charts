@@ -3,6 +3,6 @@ name: checkout-api
 description: Helm chart for the Xsolla School Checkout API
 type: application
 # Chart version — bump this when you change the chart itself (templates/values)
-version: 0.1.0
+version: 0.2.0
 # appVersion tracks the application release (informational only)
 appVersion: "1.0.0"

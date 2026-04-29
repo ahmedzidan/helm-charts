@@ -33,6 +33,11 @@ spec:
       labels:
         app: checkout-api
         {{- include "checkout-api.labels" . | nindent 8 }}
+        # Datadog unified service tags — the DD Agent reads these from pod labels
+        # to correlate traces, metrics, and logs under the same service/env/version.
+        tags.datadoghq.com/env: {{ .Values.datadog.env | quote }}
+        tags.datadoghq.com/service: {{ .Values.datadog.service | quote }}
+        tags.datadoghq.com/version: {{ .Values.datadog.version | quote }}
     spec:
       containers:
         - name: checkout-api
@@ -50,6 +55,16 @@ spec:
                 secretKeyRef:
                   name: postgres-secret
                   key: DATABASE_URL
+
+            - name: SERVICE_NAME
+              value: {{ .Values.otel.serviceName | quote }}
+
+            - name: SERVICE_ENV
+              value: {{ .Values.otel.serviceEnv | quote }}
+
+            # gRPC endpoint of the OTel Collector: <svc>.<namespace>.svc.cluster.local:4317
+            - name: OTEL_COLLECTOR_URL
+              value: {{ .Values.otel.collectorURL | quote }}
 
           # Resource limits prevent one student's app from starving others on the node
           resources:

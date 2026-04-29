@@ -31,3 +31,14 @@ resources:
     cpu: 500m
     memory: 256Mi
 
+# OTel Collector lives in the shared "monitoring" namespace on the same cluster
+otel:
+  serviceName: checkout-api
+  serviceEnv: staging
+  collectorURL: otel-col.monitoring.svc.cluster.local:4317
+
+# Datadog unified tags for staging — version is set at deploy time via --set
+datadog:
+  env: staging
+  service: checkout-api
+  version: latest
